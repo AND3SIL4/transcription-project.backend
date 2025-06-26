@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "elevenlabs>=2.5.0",
+    "fastapi[standard]>=0.115.14",
     "moviepy>=2.2.1",
     "python-dotenv>=1.1.1",
 ]
