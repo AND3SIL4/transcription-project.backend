@@ -1,7 +1,7 @@
 [project]
-name = "backend"
+name = "transcript-recordings-backend"
 version = "0.1.0"
-description = "Add your description here"
+description = "A FastAPI-based backend service for transcribing video recordings using ElevenLabs' speech-to-text API with speaker diarization support"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

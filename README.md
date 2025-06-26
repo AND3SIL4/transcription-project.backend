@@ -12,6 +12,7 @@ A FastAPI-based backend service for transcribing video recordings using ElevenLa
 - **Comprehensive Logging**: Detailed logging system for monitoring and debugging
 - **CORS Support**: Ready for frontend integration
 - **Error Handling**: Robust error handling with detailed error messages
+- **Modular Architecture**: Clean, maintainable code structure
 
 ## 🛠️ Tech Stack
 
@@ -72,7 +73,7 @@ The API will be available at `http://localhost:8000`
 
 ### Endpoints
 
-#### POST `/transcribe`
+#### POST `/api/v1/transcribe`
 
 Transcribe a video file to text.
 
@@ -86,19 +87,20 @@ Transcribe a video file to text.
 ```json
 {
   "message": "Transcription completed successfully",
-  "transcription_file": "transcription_20241201_143022.txt"
+  "transcription_file": "transcription_20241201_143022.txt",
+  "text_length": 1500
 }
 ```
 
 **Example using curl:**
 
 ```bash
-curl -X POST "http://localhost:8000/transcribe" \
+curl -X POST "http://localhost:8000/api/v1/transcribe" \
   -H "Content-Type: multipart/form-data" \
   -F "file=@your_video.mp4"
 ```
 
-#### GET `/download-transcription/{filename}`
+#### GET `/api/v1/download-transcription/{filename}`
 
 Download a transcription file.
 
@@ -113,7 +115,35 @@ Download a transcription file.
 **Example:**
 
 ```bash
-curl -O "http://localhost:8000/download-transcription/transcription_20241201_143022.txt"
+curl -O "http://localhost:8000/api/v1/download-transcription/transcription_20241201_143022.txt"
+```
+
+#### GET `/`
+
+Root endpoint with API information.
+
+**Response:**
+
+```json
+{
+  "message": "Transcript Recordings Backend API",
+  "version": "0.1.0",
+  "docs": "/docs",
+  "redoc": "/redoc"
+}
+```
+
+#### GET `/health`
+
+Health check endpoint.
+
+**Response:**
+
+```json
+{
+  "status": "healthy",
+  "service": "Transcript Recordings Backend"
+}
 ```
 
 ### Interactive API Documentation
@@ -127,16 +157,30 @@ Once the server is running, you can access:
 
 ```
 backend/
-├── main.py                 # FastAPI application entry point
+├── app/                    # Main application package
+│   ├── __init__.py        # App package initialization
+│   ├── main.py            # FastAPI application factory
+│   ├── api/               # API layer
+│   │   ├── __init__.py
+│   │   └── endpoints.py   # API route definitions
+│   ├── core/              # Core configuration
+│   │   ├── __init__.py
+│   │   └── config.py      # Application settings
+│   ├── services/          # Business logic layer
+│   │   ├── __init__.py
+│   │   └── transcription_service.py  # Transcription business logic
+│   └── utils/             # Utilities and helpers
+│       ├── __init__.py
+│       └── logging/       # Logging system
+│           ├── __init__.py
+│           ├── logger_config.py
+│           ├── example_usage.py
+│           └── LOGGING_README.md
+├── main.py                # Application entry point
 ├── pyproject.toml         # Project configuration and dependencies
 ├── uv.lock               # Locked dependency versions
 ├── README.md             # This file
 ├── .env                  # Environment variables (create this)
-├── logging/              # Logging system
-│   ├── __init__.py
-│   ├── logger_config.py  # Main logging configuration
-│   ├── example_usage.py  # Logging usage examples
-│   └── LOGGING_README.md # Detailed logging documentation
 ├── logs/                 # Generated log files
 └── transcriptions/       # Generated transcription files
 ```
@@ -149,6 +193,15 @@ backend/
 | -------------------- | ----------------------- | -------- |
 | `ELEVENLABS_API_KEY` | Your ElevenLabs API key | Yes      |
 
+### Application Settings
+
+The application uses a centralized configuration system in `app/core/config.py`:
+
+- **API Configuration**: Version, project name, CORS settings
+- **ElevenLabs Configuration**: API key, model, language settings
+- **File Processing**: Maximum file size, allowed video types
+- **Storage**: Directories for logs and transcriptions
+
 ### ElevenLabs Configuration
 
 The service is configured to use:
@@ -160,16 +213,10 @@ The service is configured to use:
   - Speaker diarization
   - Automatic language detection
 
-To change the language, modify the `language_code` parameter in `main.py`:
+To change the language, modify the `ELEVENLABS_LANGUAGE_CODE` in `app/core/config.py`:
 
 ```python
-transcription = elevenlabs.speech_to_text.convert(
-    file=audio_data,
-    model_id="scribe_v1",
-    tag_audio_events=True,
-    language_code="en",  # Change to desired language code
-    diarize=True,
-)
+ELEVENLABS_LANGUAGE_CODE: str = "en"  # Change to desired language code
 ```
 
 ## 📊 Logging System
@@ -184,7 +231,7 @@ The project includes a comprehensive logging system with:
 ### Usage Examples
 
 ```python
-from logging.logger_config import get_logger
+from app.utils.logging.logger_config import get_logger
 
 # Create a logger
 logger = get_logger("my_module")
@@ -200,22 +247,39 @@ logger.log_file_operation("save", "/path/to/file", "Saving transcription")
 logger.log_api_request("/transcribe", "POST", "File: video.mp4")
 ```
 
-For detailed logging documentation, see `logging/LOGGING_README.md`.
+For detailed logging documentation, see `app/utils/logging/LOGGING_README.md`.
+
+## 🏗️ Architecture
+
+The application follows a clean, modular architecture:
+
+- **API Layer** (`app/api/`): Handles HTTP requests and responses
+- **Service Layer** (`app/services/`): Contains business logic
+- **Core Layer** (`app/core/`): Configuration and shared utilities
+- **Utils Layer** (`app/utils/`): Helper functions and logging
+
+This separation of concerns makes the code:
+
+- **Maintainable**: Easy to modify and extend
+- **Testable**: Each layer can be tested independently
+- **Scalable**: New features can be added without affecting existing code
 
 ## 🔒 Security Considerations
 
 - **CORS**: Currently configured to allow all origins (`*`). For production, specify allowed origins.
-- **File Validation**: Only video files are accepted
+- **File Validation**: Only video files are accepted with size limits
 - **Temporary Files**: All temporary files are automatically cleaned up
 - **API Key**: Store your ElevenLabs API key securely in environment variables
+- **Input Validation**: Filename validation to prevent path traversal attacks
 
 ### Production Recommendations
 
 1. **CORS Configuration**: Update CORS settings to allow only your frontend domain
 2. **Rate Limiting**: Implement rate limiting for API endpoints
-3. **File Size Limits**: Add file size validation
+3. **File Size Limits**: Configure appropriate file size limits
 4. **Authentication**: Add authentication/authorization if needed
 5. **HTTPS**: Use HTTPS in production
+6. **Environment Variables**: Use secure environment variable management
 
 ## 🐛 Troubleshooting
 
@@ -241,13 +305,46 @@ For detailed logging documentation, see `logging/LOGGING_README.md`.
 
 - Ensure the application has write permissions to the `logs/` and `transcriptions/` directories
 
+**5. "Configuration error"**
+
+- Check that the `ELEVENLABS_API_KEY` environment variable is set
+- Verify the `.env` file is in the correct location
+
 ### Debug Mode
 
-To enable debug logging, modify `logging/logger_config.py`:
+To enable debug logging, modify `app/utils/logging/logger_config.py`:
 
 ```python
 self.logger.setLevel(logging.DEBUG)
 ```
+
+## 🧪 Development
+
+### Code Quality
+
+The project includes development tools for code quality:
+
+```bash
+# Install development dependencies
+uv sync --extra dev
+
+# Format code
+black app/
+isort app/
+
+# Lint code
+flake8 app/
+
+# Run tests (when implemented)
+pytest
+```
+
+### Adding New Features
+
+1. **API Endpoints**: Add new routes in `app/api/endpoints.py`
+2. **Business Logic**: Create new services in `app/services/`
+3. **Configuration**: Add new settings in `app/core/config.py`
+4. **Utilities**: Add helper functions in `app/utils/`
 
 ## 🤝 Contributing
 
