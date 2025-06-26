@@ -63,23 +63,28 @@ class TranscriptionLogger:
 
     def info(self, message: str):
         """Log an info message."""
-        self.logger.info(message)
+        if self.logger is not None:
+            self.logger.info(message)
 
     def error(self, message: str):
         """Log an error message."""
-        self.logger.error(message)
+        if self.logger is not None:
+            self.logger.error(message)
 
     def warning(self, message: str):
         """Log a warning message."""
-        self.logger.warning(message)
+        if self.logger is not None:
+            self.logger.warning(message)
 
     def debug(self, message: str):
         """Log a debug message."""
-        self.logger.debug(message)
+        if self.logger is not None:
+            self.logger.debug(message)
 
     def critical(self, message: str):
         """Log a critical message."""
-        self.logger.critical(message)
+        if self.logger is not None:
+            self.logger.critical(message)
 
     def log_transcription_start(self, filename: str):
         """Log the start of a transcription process."""
