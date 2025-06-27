@@ -23,7 +23,8 @@ class Settings:
     ELEVENLABS_LANGUAGE_CODE: str = "es"
 
     # File Processing Configuration
-    MAX_FILE_SIZE: int = 100 * 1024 * 1024  # 100MB
+    MAX_FILE_SIZE: int = 2 * 1024 * 1024 * 1024  # 2GB
+    # MAX_FILE_SIZE: int = 100 * 1024 * 1024  # 100MB
     ALLOWED_VIDEO_TYPES: list = [
         "video/mp4",
         "video/avi",
